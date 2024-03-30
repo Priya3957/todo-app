@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NVIC TASKS LIST 2024</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="navbar">
+    <nav>
+      <div class="logo">NVIC TODO LIST</div>
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li><a href="#">Discover</a></li>
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Content</a></li>
+        <li><a href="#">login</a></li>
+        <li><a href="#">Contact Us</a></li>
+      </ul>
+    </nav>  
+  </div>
+  <div class="container">
+    <div class="center">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+    </div>
+    <div id="Todo">
+      <h1>NVIC Task List 2024</h1>
+      <form id="new-task-form">
+        <input 
+          type="text" 
+          name="new-task-input" 
+          id="new-task-input" 
+          placeholder="What do you have planned?" />
+        <input 
+          type="submit"
+          id="new-task-submit" 
+          value="Add task" />
+      </form>
+      <main>
+        <section class="task-list">
+          <h2>Tasks</h2>
+          <div id="tasks"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.1.2/redux.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-redux/7.2.5/react-redux.js"></script>
+  <script>
+    const ADD_TASK = 'ADD_TASK';
+    const DELETE_TASK = 'DELETE_TASK';
+    const EDIT_TASK = 'EDIT_TASK';
+
+    const addTask = (text) => ({
+      type: ADD_TASK,
+      payload: { text }
+    });
+
+    const deleteTask = (id) => ({
+      type: DELETE_TASK,
+      payload: { id }
+    });
+
+    const editTask = (id, newText) => ({
+      type: EDIT_TASK,
+      payload: { id, newText }
+    });
+    const initialState = {
+      tasks: [],
+    };
+
+    const reducer = (state = initialState, action) => {
+      switch (action.type) {
+        case ADD_TASK:
+          return {
+            ...state,
+            tasks: [...state.tasks, { id: Date.now(), text: action.payload.text, editing: false }],
+          };
+        case DELETE_TASK:
+          return {
+            ...state,
+            tasks: state.tasks.filter(task => task.id !== action.payload.id),
+          };
+        case EDIT_TASK:
+          return {
+            ...state,
+            tasks: state.tasks.map(task =>
+              task.id === action.payload.id
+                ? { ...task, text: action.payload.newText, editing: !task.editing }
+                : task
+            ),
+          };
+        default:
+          return state;
+      }
+    };
+    const TaskInput = () => {
+      const [task, setTask] = React.useState('');
+      const dispatch = React.useDispatch();
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (task.trim() !== '') {
+          dispatch(addTask(task));
+          setTask('');
+        }
+      };
+
+      return (
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={task}
+            onChange={(e) => setTask(e.target.value)}
+            placeholder="What do you have planned?"
+          />
+          <button type="submit">Add task</button>
+        </form>
+      );
+    };
+
+    const TaskList = () => {
+      const tasks = React.useSelector(state => state.tasks);
+      const dispatch = React.useDispatch();
+
+      const handleEdit = (id, newValue) => {
+        dispatch(editTask(id, newValue));
+      };
+
+      return (
+        <section className="task-list">
+          <h2>Tasks</h2>
+          <div id="tasks">
+            {tasks.map(task => (
+              <div className="task" key={task.id}>
+                <div className="content">
+                  <input
+                    type="text"
+                    className="text"
+                    value={task.text}
+                    readOnly={!task.editing}
+                    onChange={(e) => handleEdit(task.id, e.target.value)}
+                  />
+                </div>
+                <div className="actions">
+                  {task.editing ? (
+                    <button onClick={() => dispatch(editTask(task.id))}>
+                      Save
+                    </button>
+                  ) : (
+                    <button onClick={() => dispatch(editTask(task.id))}>
+                      Edit
+                    </button>
+                  )}
+                  <button onClick={() => dispatch(deleteTask(task.id))}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    };
+    const store = Redux.createStore(reducer);
+    ReactDOM.render(
+      <React.StrictMode>
+        <Provider store={store}>
+          <div className="App">
+            <TaskInput />
+            <TaskList />
+          </div>
+        </Provider>
+      </React.StrictMode>,
+      document.getElementById('root')
+    );
+  </script>
+  <script src="script.js">
+  </script>
+</body>
+</html>
